@@ -1,15 +1,23 @@
 # 🤖 AI Document Tool
 
-A powerful browser-based application for searching, translating, and summarizing local documents using AI.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-14%2B-green.svg)](https://nodejs.org/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-API-blue.svg)](https://openai.com/)
+
+A powerful browser-based application for searching, translating, and summarizing local documents using AI. Automatically indexes documents from multiple folders on your machine without requiring manual uploads.
+
+![AI Document Tool](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 
 ## ✨ Features
 
-- 📤 **Upload Documents**: Support for PDF, TXT, and DOCX files
-- 🔍 **Smart Search**: Search across all uploaded documents with context highlighting
-- 🌐 **Translation**: Translate documents to 19+ languages using AI
-- 📝 **Summarization**: Generate short, medium, or long summaries of documents
-- 💻 **Browser-Based**: Runs entirely in your browser with a local backend
-- 🎨 **Modern UI**: Clean, responsive interface with drag-and-drop support
+- 📁 **Multi-Folder Indexing**: Automatically index documents from multiple folders (Documents, Desktop, Downloads, custom paths)
+- 🔍 **Smart Search**: Instant search across all indexed documents with context highlighting
+- 🌐 **AI Translation**: Translate documents to 19+ languages using OpenAI
+- 📝 **AI Summarization**: Generate short, medium, or long summaries
+- 👁️ **Real-time Monitoring**: Automatic detection of new, modified, or deleted files
+- ⚙️ **Settings Interface**: Easy folder selection and configuration via web UI
+- 💻 **Browser-Based**: Clean, responsive interface with modern design
+- 🔒 **Privacy-First**: All processing happens locally, documents never leave your machine
 
 ## 🚀 Quick Start
 
@@ -21,8 +29,9 @@ A powerful browser-based application for searching, translating, and summarizing
 
 ### Installation
 
-1. **Navigate to the project directory:**
+1. **Clone the repository:**
    ```bash
+   git clone https://github.com/hansb001/ai-document-tool.git
    cd ai-document-tool
    ```
 
@@ -37,10 +46,11 @@ A powerful browser-based application for searching, translating, and summarizing
    ```
    
    Edit `.env` and add your OpenAI API key:
-   ```
+   ```env
    OPENAI_API_KEY=your_actual_api_key_here
-   PORT=3000
-   MAX_FILE_SIZE=10485760
+   DOCUMENTS_FOLDERS=~/Documents,~/Desktop,~/Downloads,./documents
+   WATCH_DOCUMENTS=true
+   EXCLUDE_PATTERNS=node_modules,*.app,*.dmg,*.pkg,.git,.DS_Store,Library,Applications
    ```
 
 4. **Start the server:**
@@ -56,31 +66,37 @@ A powerful browser-based application for searching, translating, and summarizing
 5. **Open your browser:**
    Navigate to `http://localhost:3000`
 
-## 📖 Usage Guide
+## 📖 Usage
 
-### Uploading Documents
+### Configure Folders (Settings Tab)
 
-1. Click the upload area or drag and drop files
-2. Supported formats: PDF, TXT, DOCX (max 10MB)
-3. Documents are processed and stored locally
+1. Click the **⚙️ Settings** tab
+2. Check/uncheck folders you want to index:
+   - 📄 Documents folder
+   - 🖥️ Desktop
+   - ⬇️ Downloads
+   - 📦 Project documents
+3. Add custom folders (one per line)
+4. Adjust exclude patterns if needed
+5. Click **💾 Save & Re-index**
 
-### Searching Documents
+### Search Documents
 
-1. Go to the **Search** tab
+1. Go to the **🔍 Search** tab
 2. Enter your search query
 3. View results with highlighted matches and context
-4. Search works across all uploaded documents
+4. Search works across all indexed documents instantly
 
-### Translating Documents
+### Translate Documents
 
-1. Go to the **Translate** tab
+1. Go to the **🌐 Translate** tab
 2. Select a document from the dropdown
-3. Choose your target language
-4. Click "Translate" to get the AI-powered translation
+3. Choose your target language (19+ languages supported)
+4. Click "Translate" to get AI-powered translation
 
-### Summarizing Documents
+### Summarize Documents
 
-1. Go to the **Summarize** tab
+1. Go to the **📝 Summarize** tab
 2. Select a document from the dropdown
 3. Choose summary length:
    - **Short**: 2-3 sentences
@@ -95,59 +111,41 @@ ai-document-tool/
 ├── backend/
 │   ├── server.js              # Express server
 │   └── services/
-│       ├── documentService.js # Document processing
-│       └── aiService.js       # AI operations (OpenAI)
+│       ├── documentService.js # Document processing (PDF, TXT, DOCX)
+│       ├── aiService.js       # AI operations (OpenAI)
+│       └── indexService.js    # Multi-folder indexing & file watching
 ├── frontend/
 │   ├── index.html            # Main HTML
 │   ├── css/
 │   │   └── styles.css        # Styling
 │   └── js/
 │       └── app.js            # Frontend logic
-├── uploads/                  # Uploaded documents (auto-created)
+├── documents/                # Local documents folder (gitignored)
+├── uploads/                  # Manual uploads (gitignored)
+├── .env                      # Environment variables (gitignored)
+├── .env.example             # Environment template
 ├── package.json
-├── .env.example
 └── README.md
 ```
 
 ## 🔧 API Endpoints
 
-### Upload Document
-```
-POST /api/upload
-Content-Type: multipart/form-data
-Body: { document: File }
-```
+### Document Management
+- `GET /api/documents` - List all indexed documents
+- `GET /api/stats` - Get indexing statistics
+- `POST /api/reindex` - Re-index all documents
 
-### List Documents
-```
-GET /api/documents
-```
+### Settings
+- `GET /api/settings` - Get current folder configuration
+- `POST /api/settings` - Update folders and re-index
 
-### Search Documents
-```
-POST /api/search
-Content-Type: application/json
-Body: { query: string, documentIds?: string[] }
-```
+### Search & AI Operations
+- `POST /api/search` - Search across documents
+- `POST /api/translate` - Translate document
+- `POST /api/summarize` - Summarize document
 
-### Translate Document
-```
-POST /api/translate
-Content-Type: application/json
-Body: { documentId: string, targetLanguage: string }
-```
-
-### Summarize Document
-```
-POST /api/summarize
-Content-Type: application/json
-Body: { documentId: string, length: 'short'|'medium'|'long' }
-```
-
-### Delete Document
-```
-DELETE /api/documents/:id
-```
+### File Upload (Optional)
+- `POST /api/upload` - Upload document manually
 
 ## 🌍 Supported Languages
 
@@ -157,15 +155,28 @@ English, Spanish, French, German, Italian, Portuguese, Dutch, Russian, Chinese, 
 
 ### Environment Variables
 
-- `OPENAI_API_KEY`: Your OpenAI API key (required)
-- `PORT`: Server port (default: 3000)
-- `MAX_FILE_SIZE`: Maximum file upload size in bytes (default: 10485760 = 10MB)
+```env
+# OpenAI API Configuration
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Server Configuration
+PORT=3000
+
+# Documents Configuration
+DOCUMENTS_FOLDERS=~/Documents,~/Desktop,~/Downloads,./documents
+WATCH_DOCUMENTS=true
+EXCLUDE_PATTERNS=node_modules,*.app,*.dmg,*.pkg,.git,.DS_Store,Library,Applications
+
+# File Upload Configuration
+MAX_FILE_SIZE=10485760
+```
 
 ### Customization
 
 - **Modify AI Model**: Edit `backend/services/aiService.js` to change the OpenAI model
-- **Add File Types**: Update `backend/server.js` multer configuration and `documentService.js`
+- **Add File Types**: Update `backend/services/documentService.js` for new formats
 - **Styling**: Customize `frontend/css/styles.css`
+- **Exclude Patterns**: Add patterns in Settings tab or `.env` file
 
 ## 🛠️ Development
 
@@ -177,45 +188,65 @@ npm run dev
 
 This uses nodemon for automatic server restart on file changes.
 
-### Testing
+### Adding New Features
 
-1. Upload various document types (PDF, TXT, DOCX)
-2. Test search with different queries
-3. Try translations to different languages
-4. Generate summaries of different lengths
-5. Test file deletion
+1. Backend: Add routes in `backend/server.js`
+2. Services: Extend services in `backend/services/`
+3. Frontend: Update `frontend/js/app.js` and `frontend/index.html`
 
-## 📝 Notes
+## 📝 Technical Details
 
-- Documents are stored in the `uploads/` directory
-- Document text is kept in memory for fast access
-- Large documents are automatically chunked for AI processing
-- The application uses OpenAI's GPT-3.5-turbo model by default
+### Document Indexing
+- Uses `chokidar` for file system watching
+- Supports recursive folder scanning
+- Automatic text extraction from PDF, TXT, DOCX
+- Smart exclusion patterns to skip system files
 
-## 🔒 Security Considerations
+### Search
+- Case-insensitive text search
+- Context highlighting around matches
+- Results show file path and match location
 
-- Keep your `.env` file secure and never commit it to version control
-- The application is designed for local use
-- For production deployment, add authentication and rate limiting
-- Consider implementing file size and type validation on the backend
+### AI Processing
+- Uses OpenAI GPT-3.5-turbo by default
+- Automatic text chunking for large documents
+- Streaming support for better performance
+
+## 🔒 Security & Privacy
+
+- ✅ API keys stored in `.env` (gitignored)
+- ✅ Documents folder excluded from git
+- ✅ All processing happens locally
+- ✅ No data sent to external services except OpenAI API
+- ✅ Configurable exclude patterns for sensitive files
+
+**For production deployment:**
+- Add authentication
+- Implement rate limiting
+- Use HTTPS
+- Set up proper CORS policies
 
 ## 🐛 Troubleshooting
 
 ### "Invalid OpenAI API key" error
 - Check that your API key is correctly set in `.env`
 - Ensure the key has sufficient credits
+- Verify no extra spaces in the key
 
-### Upload fails
-- Check file size (must be under 10MB by default)
-- Verify file format is supported (PDF, TXT, DOCX)
+### No documents showing
+- Check that documents are in indexed folders
+- Click "🔄 Re-index Documents" button
+- Verify file formats are supported (PDF, TXT, DOCX)
 
 ### Server won't start
-- Ensure port 3000 is not in use
-- Check that all dependencies are installed (`npm install`)
+- Ensure port 3000 is not in use: `lsof -ti:3000 | xargs kill -9`
+- Check that all dependencies are installed: `npm install`
+- Verify Node.js version: `node --version` (should be 14+)
 
-### Translation/Summarization takes long
-- Large documents are processed in chunks
-- This is normal for documents over 4000 characters
+### Search not working
+- Ensure documents are indexed (check statistics)
+- Try re-indexing from Settings tab
+- Check console for errors
 
 ## 📄 License
 
@@ -223,23 +254,43 @@ MIT License - feel free to use and modify as needed.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to submit issues or pull requests.
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## 💡 Future Enhancements
 
-- [ ] Support for more file formats (EPUB, RTF, etc.)
+- [ ] Support for more file formats (EPUB, RTF, HTML, Markdown)
 - [ ] Batch processing of multiple documents
-- [ ] Export results to various formats
+- [ ] Export results to various formats (PDF, DOCX, JSON)
 - [ ] Document comparison feature
 - [ ] Advanced search with regex support
 - [ ] User authentication and document management
-- [ ] Cloud storage integration
-- [ ] Support for other AI providers (Anthropic Claude, etc.)
+- [ ] Cloud storage integration (Google Drive, Dropbox)
+- [ ] Support for other AI providers (Anthropic Claude, Google Gemini)
+- [ ] Vector database integration for semantic search
+- [ ] Document versioning and history
+- [ ] Collaborative features
+- [ ] Mobile app
 
 ## 📧 Support
 
-For issues or questions, please open an issue on the project repository.
+For issues or questions, please open an issue on the [GitHub repository](https://github.com/hansb001/ai-document-tool/issues).
+
+## 🙏 Acknowledgments
+
+- Built with [Node.js](https://nodejs.org/) and [Express](https://expressjs.com/)
+- AI powered by [OpenAI](https://openai.com/)
+- PDF parsing with [pdf-parse](https://www.npmjs.com/package/pdf-parse)
+- DOCX parsing with [mammoth](https://www.npmjs.com/package/mammoth)
+- File watching with [chokidar](https://www.npmjs.com/package/chokidar)
 
 ---
 
-Made with ❤️ using Node.js, Express, and OpenAI
+Made with ❤️ by [Hans Boef](https://github.com/hansb001)
+
+**⭐ Star this repository if you find it useful!**
