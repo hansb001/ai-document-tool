@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Document Tool - Search, Translate & Summarize</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 AI Document Tool</h1>
+            <p class="subtitle">Search, Translate, and Summarize Your Indexed Documents</p>
+        </header>
+
+        <main>
+            <!-- Action Tabs - MOVED TO TOP -->
+            <section class="card actions-section">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="search">🔍 Search</button>
+                    <button class="tab-button" data-tab="translate">🌐 Translate</button>
+                    <button class="tab-button" data-tab="summarize">📝 Summarize</button>
+                    <button class="tab-button" data-tab="settings">⚙️ Settings</button>
+                </div>
+
+                <!-- Search Tab -->
+                <div class="tab-content active" id="searchTab">
+                    <h3>Search in Documents</h3>
+                    <div class="form-group">
+                        <input type="text" id="searchQuery" placeholder="Enter search query..." class="input-field">
+                        <button id="searchBtn" class="btn btn-primary">Search</button>
+                    </div>
+                    <div id="searchResults" class="results-area"></div>
+                </div>
+
+                <!-- Translate Tab -->
+                <div class="tab-content" id="translateTab">
+                    <h3>Translate Document</h3>
+                    <div class="form-group">
+                        <select id="documentSelect" class="select-field">
+                            <option value="">Select a document...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="targetLanguage" class="select-field">
+                            <option value="">Select target language...</option>
+                            <option value="English">English</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Portuguese">Portuguese</option>
+                            <option value="Dutch">Dutch</option>
+                            <option value="Russian">Russian</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Korean">Korean</option>
+                            <option value="Arabic">Arabic</option>
+                            <option value="Hindi">Hindi</option>
+                        </select>
+                    </div>
+                    <button id="translateBtn" class="btn btn-primary">Translate</button>
+                    <div id="translateResults" class="results-area"></div>
+                </div>
+
+                <!-- Summarize Tab -->
+                <div class="tab-content" id="summarizeTab">
+                    <h3>Summarize Document</h3>
+                    <div class="form-group">
+                        <select id="documentSelectSummarize" class="select-field">
+                            <option value="">Select a document...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="radio-group">
+                            <input type="radio" name="summaryLength" value="short"> Short (2-3 sentences)
+                        </label>
+                        <label class="radio-group">
+                            <input type="radio" name="summaryLength" value="medium" checked> Medium (1-2 paragraphs)
+                        </label>
+                        <label class="radio-group">
+                            <input type="radio" name="summaryLength" value="long"> Long (3-4 paragraphs)
+                        </label>
+                    </div>
+                    <button id="summarizeBtn" class="btn btn-primary">Summarize</button>
+                    <div id="summarizeResults" class="results-area"></div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div class="tab-content" id="settingsTab">
+                    <h3>⚙️ Indexing Settings</h3>
+                    <p style="color: #6b7280; margin-bottom: 1.5rem;">Choose which folders to index for searching, translation, and summarization.</p>
+                    
+                    <div class="form-group">
+                        <h4 style="margin-bottom: 0.5rem;">📁 Common Folders</h4>
+                        <label class="checkbox-group">
+                            <input type="checkbox" id="folder-documents" value="~/Documents" checked>
+                            <span>📄 Documents folder (~/Documents)</span>
+                        </label>
+                        <label class="checkbox-group">
+                            <input type="checkbox" id="folder-desktop" value="~/Desktop" checked>
+                            <span>🖥️ Desktop (~/Desktop)</span>
+                        </label>
+                        <label class="checkbox-group">
+                            <input type="checkbox" id="folder-downloads" value="~/Downloads" checked>
+                            <span>⬇️ Downloads (~/Downloads)</span>
+                        </label>
+                        <label class="checkbox-group">
+                            <input type="checkbox" id="folder-project" value="./documents" checked>
+                            <span>📦 Project documents (./documents)</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <h4 style="margin-bottom: 0.5rem;">➕ Custom Folders</h4>
+                        <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 0.5rem;">Add custom folder paths (one per line). Use ~ for home directory.</p>
+                        <textarea id="customFolders" class="input-field" rows="4" placeholder="~/Work&#10;~/Projects&#10;/path/to/folder"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <h4 style="margin-bottom: 0.5rem;">🚫 Exclude Patterns</h4>
+                        <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 0.5rem;">Patterns to exclude (comma-separated). Supports wildcards (*).</p>
+                        <input type="text" id="excludePatterns" class="input-field" value="node_modules,*.app,*.dmg,*.pkg,.git,.DS_Store,Library,Applications" placeholder="node_modules,*.app,.git">
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button id="saveSettingsBtn" class="btn btn-primary">💾 Save & Re-index</button>
+                        <button id="loadSettingsBtn" class="btn btn-secondary">🔄 Load Current Settings</button>
+                    </div>
+
+                    <div id="settingsStatus" style="margin-top: 1rem;"></div>
+                </div>
+            </section>
+
+            <!-- Index Statistics -->
+            <section class="card stats-section">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-icon">📚</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statDocuments">0</div>
+                            <div class="stat-label">Documents</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">💾</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statSize">0 MB</div>
+                            <div class="stat-label">Total Size</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statWords">0</div>
+                            <div class="stat-label">Total Words</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon" id="watchIcon">👁️</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="statStatus">Active</div>
+                            <div class="stat-label">Status</div>
+                        </div>
+                    </div>
+                </div>
+                <button id="reindexBtn" class="btn btn-secondary" style="margin-top: 1rem;">🔄 Re-index Documents</button>
+            </section>
+
+            <!-- Documents List -->
+            <section class="card documents-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="margin: 0;">📚 Indexed Documents</h2>
+                    <button id="refreshBtn" class="btn btn-secondary btn-sm">↻ Refresh</button>
+                </div>
+                <div id="documentsList" class="documents-list">
+                    <p class="empty-state">Loading documents...</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
