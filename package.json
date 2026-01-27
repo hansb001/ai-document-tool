@@ -1,7 +1,7 @@
 {
-  "name": "ai-document-tool",
+  "name": "intelligent-document-search",
   "version": "1.0.0",
-  "description": "AI-powered tool for searching, translating, and summarizing local documents",
+  "description": "Intelligent Document Search - Powered by Novadoc. AI-powered tool for searching, translating, and summarizing local documents",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",

@@ -1,4 +1,6 @@
-# 🤖 AI Document Tool
+# 🔍 Intelligent Document Search
+
+**Powered by Novadoc**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-14%2B-green.svg)](https://nodejs.org/)
@@ -6,7 +8,7 @@
 
 A powerful browser-based application for searching, translating, and summarizing local documents using AI. Automatically indexes documents from multiple folders on your machine without requiring manual uploads.
 
-![AI Document Tool](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Intelligent Document Search](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 
 ## ✨ Features
 

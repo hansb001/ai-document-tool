@@ -36,6 +36,17 @@ header {
     margin-bottom: 3rem;
 }
 
+.header-logo {
+    margin-bottom: 1rem;
+}
+
+.logo {
+    max-width: 200px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
 h1 {
     font-size: 2.5rem;
     font-weight: 700;
