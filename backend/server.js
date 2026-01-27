@@ -249,6 +249,42 @@ app.post('/api/summarize', async (req, res) => {
   }
 });
 
+// Open document in default application
+app.post('/api/open-document', async (req, res) => {
+  try {
+    const { documentId } = req.body;
+    
+    if (!documentId) {
+      return res.status(400).json({ error: 'Document ID is required' });
+    }
+
+    const doc = indexService.getDocument(documentId);
+    if (!doc) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    // Use 'open' command on macOS to open file in default application
+    const { exec } = require('child_process');
+    const filePath = doc.path;
+    
+    exec(`open "${filePath}"`, (error) => {
+      if (error) {
+        console.error('Error opening document:', error);
+        return res.status(500).json({ error: 'Failed to open document' });
+      }
+      
+      res.json({
+        success: true,
+        message: 'Document opened successfully',
+        path: filePath
+      });
+    });
+  } catch (error) {
+    console.error('Open document error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   const stats = indexService.getStats();

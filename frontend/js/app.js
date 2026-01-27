@@ -172,6 +172,9 @@ function renderDocuments() {
                 </div>
             </div>
             <div class="document-actions">
+                <button class="btn-icon open" onclick="openDocument('${doc.id}')" title="Open Document">
+                    📂
+                </button>
                 <button class="btn-icon delete" onclick="deleteDocument('${doc.id}')" title="Delete">
                     🗑️
                 </button>
@@ -187,6 +190,30 @@ function updateDocumentSelects() {
     
     documentSelect.innerHTML = '<option value="">Select a document...</option>' + options;
     documentSelectSummarize.innerHTML = '<option value="">Select a document...</option>' + options;
+}
+
+async function openDocument(docId) {
+    showLoading();
+    
+    try {
+        const response = await fetch(`${API_BASE}/open-document`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ documentId: docId })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showStatus('success', `✓ Document opened: ${data.path}`);
+        } else {
+            showStatus('error', `✗ Failed to open document: ${data.error}`);
+        }
+    } catch (error) {
+        showStatus('error', `✗ Failed to open document: ${error.message}`);
+    } finally {
+        hideLoading();
+    }
 }
 
 async function deleteDocument(docId) {
@@ -281,7 +308,13 @@ function displaySearchResults(results, query) {
         </p>
         ${results.map(result => `
             <div class="search-result">
-                <h4>📄 ${result.filename}</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h4 style="margin: 0;">📄 ${result.filename}</h4>
+                    <button class="btn btn-sm" onclick="openDocument('${result.documentId}')" style="padding: 0.25rem 0.75rem;">
+                        📂 Open
+                    </button>
+                </div>
+                <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">${result.relativePath || ''}</p>
                 ${result.matches.slice(0, 5).map(match => `
                     <p style="margin: 0.5rem 0; color: #4b5563;">
                         ${highlightMatch(match.context, query)}

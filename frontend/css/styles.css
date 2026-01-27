@@ -184,6 +184,11 @@ h3 {
     background: var(--border-color);
 }
 
+.btn-icon.open:hover {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
 .btn-icon.delete:hover {
     background: #fee2e2;
     color: var(--danger-color);
