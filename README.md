@@ -17,7 +17,7 @@ A powerful browser-based application for searching, translating, and summarizing
 - 🔍 **Smart Search**: Instant search across all indexed documents with context highlighting
 - 🌐 **AI Translation**: Translate documents to 19+ languages using OpenAI
 - 📝 **AI Summarization**: Generate short, medium, or long summaries
-- 🔄 **Document Comparison**: AI-powered comparison to analyze differences and similarities between documents
+- 🔄 **Duplicate Detection & Comparison**: Automatically finds documents with the same filename and compares different versions
 - 👁️ **Real-time Monitoring**: Automatic detection of new, modified, or deleted files
 - ⚙️ **Settings Interface**: Easy folder selection and configuration via web UI
 - 💻 **Browser-Based**: Clean, responsive interface with modern design
@@ -108,16 +108,26 @@ A powerful browser-based application for searching, translating, and summarizing
    - **Long**: 3-4 paragraphs
 4. Click "Summarize" to generate the summary
 
-### Compare Documents
+### Compare Duplicate Documents
 
 1. Go to the **🔄 Compare** tab
-2. Select the first document from the dropdown
-3. Select the second document from the dropdown
-4. Click "Compare Documents" to analyze:
-   - **Key Differences**: Major changes between documents
+2. Click "🔍 Find Duplicate Filenames" to scan for documents with the same name
+3. The system will display all duplicate filename groups
+4. For each duplicate group:
+   - View all versions with their locations and modification dates
+   - Click "Compare These Two Versions" (for 2 versions)
+   - Or select specific versions to compare (for 3+ versions)
+5. View the AI-powered comparison showing:
+   - **Key Differences**: Major changes between versions
    - **Similarities**: Common themes and content
    - **Content Changes**: Specific modifications
    - **Summary**: Overall relationship assessment
+
+**Use Cases:**
+- Compare contract versions across different folders
+- Identify changes between draft and final documents
+- Verify document consistency across OneDrive and local storage
+- Track document evolution over time
 
 ## ☁️ OneDrive Integration
 

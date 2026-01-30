@@ -177,6 +177,21 @@ app.post('/api/settings', async (req, res) => {
   }
 });
 
+// Get duplicate filenames
+app.get('/api/duplicates', (req, res) => {
+  try {
+    const duplicates = indexService.findDuplicateFilenames();
+    res.json({
+      success: true,
+      duplicates: duplicates,
+      totalDuplicateGroups: duplicates.length
+    });
+  } catch (error) {
+    console.error('Duplicate detection error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Search in indexed documents
 app.post('/api/search', async (req, res) => {
   try {

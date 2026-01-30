@@ -367,6 +367,51 @@ class IndexService {
   }
 
   /**
+   * Find duplicate filenames across different folders
+   */
+  findDuplicateFilenames() {
+    const filenameMap = new Map();
+    
+    // Group documents by filename
+    for (const doc of this.documents.values()) {
+      const filename = doc.filename;
+      if (!filenameMap.has(filename)) {
+        filenameMap.set(filename, []);
+      }
+      filenameMap.get(filename).push({
+        id: doc.id,
+        filename: doc.filename,
+        path: doc.path,
+        relativePath: doc.relativePath,
+        size: doc.size,
+        modifiedAt: doc.modifiedAt
+      });
+    }
+    
+    // Filter to only duplicates (2 or more files with same name)
+    const duplicates = [];
+    for (const [filename, docs] of filenameMap.entries()) {
+      if (docs.length >= 2) {
+        duplicates.push({
+          filename: filename,
+          count: docs.length,
+          documents: docs
+        });
+      }
+    }
+    
+    // Sort by count (most duplicates first) then by filename
+    duplicates.sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count;
+      }
+      return a.filename.localeCompare(b.filename);
+    });
+    
+    return duplicates;
+  }
+
+  /**
    * Stop watching for changes
    */
   stopWatching() {

@@ -92,24 +92,15 @@
 
                 <!-- Compare Tab -->
                 <div class="tab-content" id="compareTab">
-                    <h3>Compare Documents</h3>
-                    <p style="color: #6b7280; margin-bottom: 1rem;">Select two documents to compare and analyze their differences and similarities.</p>
+                    <h3>Compare Duplicate Documents</h3>
+                    <p style="color: #6b7280; margin-bottom: 1rem;">Automatically detects documents with the same filename in different locations and allows you to compare them.</p>
                     
-                    <div class="form-group">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">📄 First Document</label>
-                        <select id="documentSelectCompare1" class="select-field">
-                            <option value="">Select first document...</option>
-                        </select>
+                    <div style="margin-bottom: 1rem;">
+                        <button id="findDuplicatesBtn" class="btn btn-secondary">🔍 Find Duplicate Filenames</button>
+                        <span id="duplicateCount" style="margin-left: 1rem; color: #6b7280;"></span>
                     </div>
                     
-                    <div class="form-group">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">📄 Second Document</label>
-                        <select id="documentSelectCompare2" class="select-field">
-                            <option value="">Select second document...</option>
-                        </select>
-                    </div>
-                    
-                    <button id="compareBtn" class="btn btn-primary">🔄 Compare Documents</button>
+                    <div id="duplicatesList" class="duplicates-list"></div>
                     <div id="compareResults" class="results-area"></div>
                 </div>
 

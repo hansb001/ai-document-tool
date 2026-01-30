@@ -32,9 +32,9 @@ const summarizeBtn = document.getElementById('summarizeBtn');
 const summarizeResults = document.getElementById('summarizeResults');
 
 // Compare elements
-const documentSelectCompare1 = document.getElementById('documentSelectCompare1');
-const documentSelectCompare2 = document.getElementById('documentSelectCompare2');
-const compareBtn = document.getElementById('compareBtn');
+const findDuplicatesBtn = document.getElementById('findDuplicatesBtn');
+const duplicatesList = document.getElementById('duplicatesList');
+const duplicateCount = document.getElementById('duplicateCount');
 const compareResults = document.getElementById('compareResults');
 
 // Initialize
@@ -67,8 +67,8 @@ function setupEventListeners() {
     // Summarize
     summarizeBtn.addEventListener('click', performSummarization);
     
-    // Compare
-    compareBtn.addEventListener('click', performComparison);
+    // Find duplicates
+    findDuplicatesBtn.addEventListener('click', findDuplicates);
     
     // Re-index button
     const reindexBtn = document.getElementById('reindexBtn');
@@ -199,8 +199,6 @@ function updateDocumentSelects() {
     
     documentSelect.innerHTML = '<option value="">Select a document...</option>' + options;
     documentSelectSummarize.innerHTML = '<option value="">Select a document...</option>' + options;
-    documentSelectCompare1.innerHTML = '<option value="">Select first document...</option>' + options;
-    documentSelectCompare2.innerHTML = '<option value="">Select second document...</option>' + options;
 }
 
 async function openDocument(docId) {
@@ -425,21 +423,80 @@ async function performSummarization() {
     }
 }
 
-// Comparison Functionality
-async function performComparison() {
-    const docId1 = documentSelectCompare1.value;
-    const docId2 = documentSelectCompare2.value;
+// Duplicate Detection and Comparison Functionality
+async function findDuplicates() {
+    showLoading();
+    duplicatesList.innerHTML = '';
+    compareResults.innerHTML = '';
+    duplicateCount.textContent = '';
     
-    if (!docId1 || !docId2) {
-        alert('Please select two documents to compare');
-        return;
+    try {
+        const response = await fetch(`${API_BASE}/duplicates`);
+        const data = await response.json();
+        
+        if (response.ok && data.duplicates.length > 0) {
+            duplicateCount.textContent = `Found ${data.totalDuplicateGroups} duplicate filename(s)`;
+            displayDuplicates(data.duplicates);
+        } else if (data.duplicates.length === 0) {
+            duplicatesList.innerHTML = '<p style="color: #6b7280; padding: 1rem; text-align: center;">✓ No duplicate filenames found. All documents have unique names.</p>';
+        } else {
+            duplicatesList.innerHTML = `<p class="error">Failed to find duplicates: ${data.error}</p>`;
+        }
+    } catch (error) {
+        duplicatesList.innerHTML = `<p class="error">Failed to find duplicates: ${error.message}</p>`;
+    } finally {
+        hideLoading();
     }
-    
-    if (docId1 === docId2) {
-        alert('Please select two different documents');
-        return;
-    }
-    
+}
+
+function displayDuplicates(duplicates) {
+    duplicatesList.innerHTML = duplicates.map(dup => `
+        <div class="duplicate-group">
+            <div class="duplicate-header">
+                <h4 style="margin: 0; color: #1f2937;">📄 ${dup.filename}</h4>
+                <span class="duplicate-badge">${dup.count} versions</span>
+            </div>
+            <div class="duplicate-documents">
+                ${dup.documents.map((doc, index) => `
+                    <div class="duplicate-doc-item">
+                        <div class="duplicate-doc-info">
+                            <span class="duplicate-doc-number">#${index + 1}</span>
+                            <div>
+                                <p style="margin: 0; font-size: 0.875rem; color: #4b5563;">${doc.relativePath}</p>
+                                <p style="margin: 0.25rem 0 0 0; font-size: 0.75rem; color: #9ca3af;">
+                                    ${formatFileSize(doc.size)} • Modified: ${new Date(doc.modifiedAt).toLocaleString()}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            ${dup.count === 2 ? `
+                <button class="btn btn-primary" onclick="compareDuplicates('${dup.documents[0].id}', '${dup.documents[1].id}', '${escapeHtml(dup.filename)}')" style="margin-top: 0.75rem; width: 100%;">
+                    🔄 Compare These Two Versions
+                </button>
+            ` : dup.count > 2 ? `
+                <div style="margin-top: 0.75rem;">
+                    <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">Select two versions to compare:</p>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="compare-select-1-${dup.filename.replace(/[^a-zA-Z0-9]/g, '')}" class="select-field" style="flex: 1;">
+                            ${dup.documents.map((doc, idx) => `<option value="${doc.id}">Version #${idx + 1}</option>`).join('')}
+                        </select>
+                        <span>vs</span>
+                        <select id="compare-select-2-${dup.filename.replace(/[^a-zA-Z0-9]/g, '')}" class="select-field" style="flex: 1;">
+                            ${dup.documents.map((doc, idx) => `<option value="${doc.id}" ${idx === 1 ? 'selected' : ''}>Version #${idx + 1}</option>`).join('')}
+                        </select>
+                        <button class="btn btn-primary" onclick="compareSelected('${dup.filename.replace(/[^a-zA-Z0-9]/g, '')}', '${escapeHtml(dup.filename)}')">
+                            Compare
+                        </button>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+async function compareDuplicates(docId1, docId2, filename) {
     showLoading();
     compareResults.innerHTML = '';
     
@@ -453,19 +510,21 @@ async function performComparison() {
         const data = await response.json();
         
         if (response.ok) {
-            // Convert markdown-style formatting to HTML
             const formattedComparison = formatComparisonResult(data.comparison);
             
             compareResults.innerHTML = `
-                <div class="comparison-header" style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-                    <h4 style="margin: 0 0 0.5rem 0;">📊 Document Comparison</h4>
-                    <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">
-                        <strong>Document 1:</strong> ${data.document1.filename}<br>
-                        <strong>Document 2:</strong> ${data.document2.filename}
+                <div class="comparison-header">
+                    <h4 style="margin: 0 0 0.5rem 0; color: white;">📊 Comparing: ${filename}</h4>
+                    <p style="margin: 0; opacity: 0.95;">
+                        <strong>Version 1:</strong> ${data.document1.filename} (${data.document1.id.substring(0, 8)}...)<br>
+                        <strong>Version 2:</strong> ${data.document2.filename} (${data.document2.id.substring(0, 8)}...)
                     </p>
                 </div>
                 <div class="result-text comparison-result">${formattedComparison}</div>
             `;
+            
+            // Scroll to results
+            compareResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
             compareResults.innerHTML = `<p class="error">Comparison failed: ${data.error}</p>`;
         }
@@ -474,6 +533,27 @@ async function performComparison() {
     } finally {
         hideLoading();
     }
+}
+
+function compareSelected(safeFilename, originalFilename) {
+    const select1 = document.getElementById(`compare-select-1-${safeFilename}`);
+    const select2 = document.getElementById(`compare-select-2-${safeFilename}`);
+    
+    const docId1 = select1.value;
+    const docId2 = select2.value;
+    
+    if (docId1 === docId2) {
+        alert('Please select two different versions to compare');
+        return;
+    }
+    
+    compareDuplicates(docId1, docId2, originalFilename);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function formatComparisonResult(text) {
