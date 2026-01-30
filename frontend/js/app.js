@@ -31,6 +31,12 @@ const documentSelectSummarize = document.getElementById('documentSelectSummarize
 const summarizeBtn = document.getElementById('summarizeBtn');
 const summarizeResults = document.getElementById('summarizeResults');
 
+// Compare elements
+const documentSelectCompare1 = document.getElementById('documentSelectCompare1');
+const documentSelectCompare2 = document.getElementById('documentSelectCompare2');
+const compareBtn = document.getElementById('compareBtn');
+const compareResults = document.getElementById('compareResults');
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
@@ -60,6 +66,9 @@ function setupEventListeners() {
     
     // Summarize
     summarizeBtn.addEventListener('click', performSummarization);
+    
+    // Compare
+    compareBtn.addEventListener('click', performComparison);
     
     // Re-index button
     const reindexBtn = document.getElementById('reindexBtn');
@@ -184,12 +193,14 @@ function renderDocuments() {
 }
 
 function updateDocumentSelects() {
-    const options = documents.map(doc => 
+    const options = documents.map(doc =>
         `<option value="${doc.id}">${doc.filename}</option>`
     ).join('');
     
     documentSelect.innerHTML = '<option value="">Select a document...</option>' + options;
     documentSelectSummarize.innerHTML = '<option value="">Select a document...</option>' + options;
+    documentSelectCompare1.innerHTML = '<option value="">Select first document...</option>' + options;
+    documentSelectCompare2.innerHTML = '<option value="">Select second document...</option>' + options;
 }
 
 async function openDocument(docId) {
@@ -412,6 +423,87 @@ async function performSummarization() {
     } finally {
         hideLoading();
     }
+}
+
+// Comparison Functionality
+async function performComparison() {
+    const docId1 = documentSelectCompare1.value;
+    const docId2 = documentSelectCompare2.value;
+    
+    if (!docId1 || !docId2) {
+        alert('Please select two documents to compare');
+        return;
+    }
+    
+    if (docId1 === docId2) {
+        alert('Please select two different documents');
+        return;
+    }
+    
+    showLoading();
+    compareResults.innerHTML = '';
+    
+    try {
+        const response = await fetch(`${API_BASE}/compare`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ documentId1: docId1, documentId2: docId2 })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Convert markdown-style formatting to HTML
+            const formattedComparison = formatComparisonResult(data.comparison);
+            
+            compareResults.innerHTML = `
+                <div class="comparison-header" style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                    <h4 style="margin: 0 0 0.5rem 0;">📊 Document Comparison</h4>
+                    <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">
+                        <strong>Document 1:</strong> ${data.document1.filename}<br>
+                        <strong>Document 2:</strong> ${data.document2.filename}
+                    </p>
+                </div>
+                <div class="result-text comparison-result">${formattedComparison}</div>
+            `;
+        } else {
+            compareResults.innerHTML = `<p class="error">Comparison failed: ${data.error}</p>`;
+        }
+    } catch (error) {
+        compareResults.innerHTML = `<p class="error">Comparison failed: ${error.message}</p>`;
+    } finally {
+        hideLoading();
+    }
+}
+
+function formatComparisonResult(text) {
+    // Convert markdown-style formatting to HTML
+    let formatted = text
+        // Bold text
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        // Headers
+        .replace(/^### (.+)$/gm, '<h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #1f2937;">$1</h4>')
+        .replace(/^## (.+)$/gm, '<h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #1f2937;">$1</h3>')
+        .replace(/^# (.+)$/gm, '<h2 style="margin-top: 1.5rem; margin-bottom: 0.5rem; color: #1f2937;">$1</h2>')
+        // Bullet points
+        .replace(/^- (.+)$/gm, '<li style="margin-left: 1.5rem;">$1</li>')
+        .replace(/^• (.+)$/gm, '<li style="margin-left: 1.5rem;">$1</li>')
+        // Numbered lists
+        .replace(/^\d+\. (.+)$/gm, '<li style="margin-left: 1.5rem;">$1</li>')
+        // Paragraphs
+        .replace(/\n\n/g, '</p><p style="margin: 1rem 0;">')
+        // Line breaks
+        .replace(/\n/g, '<br>');
+    
+    // Wrap in paragraph tags
+    formatted = '<p style="margin: 1rem 0;">' + formatted + '</p>';
+    
+    // Wrap consecutive list items in ul tags
+    formatted = formatted.replace(/(<li[^>]*>.*?<\/li>)(?:\s*<br>\s*<li[^>]*>.*?<\/li>)*/g, function(match) {
+        return '<ul style="margin: 0.5rem 0;">' + match.replace(/<br>/g, '') + '</ul>';
+    });
+    
+    return formatted;
 }
 
 // UI Helpers

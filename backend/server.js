@@ -249,6 +249,47 @@ app.post('/api/summarize', async (req, res) => {
   }
 });
 
+// Compare two documents
+app.post('/api/compare', async (req, res) => {
+  try {
+    const { documentId1, documentId2 } = req.body;
+    
+    if (!documentId1 || !documentId2) {
+      return res.status(400).json({ error: 'Two document IDs are required' });
+    }
+
+    const doc1 = indexService.getDocument(documentId1);
+    const doc2 = indexService.getDocument(documentId2);
+    
+    if (!doc1 || !doc2) {
+      return res.status(404).json({ error: 'One or both documents not found' });
+    }
+
+    const comparison = await aiService.compareDocuments(
+      doc1.text,
+      doc2.text,
+      doc1.filename,
+      doc2.filename
+    );
+    
+    res.json({
+      success: true,
+      document1: {
+        id: doc1.id,
+        filename: doc1.filename
+      },
+      document2: {
+        id: doc2.id,
+        filename: doc2.filename
+      },
+      comparison: comparison
+    });
+  } catch (error) {
+    console.error('Comparison error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Open document in default application
 app.post('/api/open-document', async (req, res) => {
   try {

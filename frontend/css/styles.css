@@ -391,6 +391,74 @@ textarea.input-field {
     line-height: 1.8;
 }
 
+/* Comparison Results */
+.comparison-result {
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.comparison-result h2,
+.comparison-result h3,
+.comparison-result h4 {
+    color: var(--primary-color);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.comparison-result h2 {
+    font-size: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.comparison-result h3 {
+    font-size: 1.25rem;
+}
+
+.comparison-result h4 {
+    font-size: 1.1rem;
+}
+
+.comparison-result ul {
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
+}
+
+.comparison-result li {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
+
+.comparison-result p {
+    margin: 1rem 0;
+    line-height: 1.8;
+}
+
+.comparison-result strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.comparison-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.comparison-header h4 {
+    color: white !important;
+    margin: 0 0 0.5rem 0 !important;
+}
+
+.comparison-header p {
+    margin: 0;
+    opacity: 0.95;
+}
+
 /* Status Messages */
 .status-message {
     margin-top: 1rem;

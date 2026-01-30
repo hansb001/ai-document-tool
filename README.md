@@ -17,6 +17,7 @@ A powerful browser-based application for searching, translating, and summarizing
 - 🔍 **Smart Search**: Instant search across all indexed documents with context highlighting
 - 🌐 **AI Translation**: Translate documents to 19+ languages using OpenAI
 - 📝 **AI Summarization**: Generate short, medium, or long summaries
+- 🔄 **Document Comparison**: AI-powered comparison to analyze differences and similarities between documents
 - 👁️ **Real-time Monitoring**: Automatic detection of new, modified, or deleted files
 - ⚙️ **Settings Interface**: Easy folder selection and configuration via web UI
 - 💻 **Browser-Based**: Clean, responsive interface with modern design
@@ -106,6 +107,17 @@ A powerful browser-based application for searching, translating, and summarizing
    - **Medium**: 1-2 paragraphs
    - **Long**: 3-4 paragraphs
 4. Click "Summarize" to generate the summary
+
+### Compare Documents
+
+1. Go to the **🔄 Compare** tab
+2. Select the first document from the dropdown
+3. Select the second document from the dropdown
+4. Click "Compare Documents" to analyze:
+   - **Key Differences**: Major changes between documents
+   - **Similarities**: Common themes and content
+   - **Content Changes**: Specific modifications
+   - **Summary**: Overall relationship assessment
 
 ## ☁️ OneDrive Integration
 

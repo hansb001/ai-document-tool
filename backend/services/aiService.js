@@ -191,8 +191,58 @@ function getAvailableLanguages() {
   ];
 }
 
+/**
+ * Compare two documents and highlight differences, similarities, and changes
+ */
+async function compareDocuments(text1, text2, doc1Name, doc2Name) {
+  try {
+    // Truncate texts if they're too long
+    const maxLength = 6000;
+    const truncatedText1 = text1.length > maxLength ? text1.substring(0, maxLength) + '...' : text1;
+    const truncatedText2 = text2.length > maxLength ? text2.substring(0, maxLength) + '...' : text2;
+    
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert document analyst. Compare two documents and provide a detailed analysis including:
+1. **Key Differences**: Major changes, additions, or removals between the documents
+2. **Similarities**: Common themes, topics, or content that appears in both
+3. **Content Changes**: Specific modifications in wording, data, or structure
+4. **Summary**: Overall assessment of how the documents relate to each other
+
+Format your response in clear sections with markdown formatting.`
+        },
+        {
+          role: 'user',
+          content: `Compare these two documents:
+
+**Document 1: ${doc1Name}**
+${truncatedText1}
+
+**Document 2: ${doc2Name}**
+${truncatedText2}
+
+Please provide a comprehensive comparison analysis.`
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 2000
+    });
+    
+    return response.choices[0].message.content;
+  } catch (error) {
+    if (error.status === 401) {
+      throw new Error('Invalid OpenAI API key. Please check your .env file.');
+    }
+    throw new Error(`Document comparison failed: ${error.message}`);
+  }
+}
+
 module.exports = {
   translate,
   summarize,
+  compareDocuments,
   getAvailableLanguages
 };
