@@ -13,6 +13,7 @@ A powerful browser-based application for searching, translating, and summarizing
 ## ✨ Features
 
 - 📁 **Multi-Folder Indexing**: Automatically index documents from multiple folders (Documents, Desktop, Downloads, custom paths)
+- ☁️ **OneDrive Integration**: Seamlessly search documents in Microsoft OneDrive (Personal & Business)
 - 🔍 **Smart Search**: Instant search across all indexed documents with context highlighting
 - 🌐 **AI Translation**: Translate documents to 19+ languages using OpenAI
 - 📝 **AI Summarization**: Generate short, medium, or long summaries
@@ -105,6 +106,32 @@ A powerful browser-based application for searching, translating, and summarizing
    - **Medium**: 1-2 paragraphs
    - **Long**: 3-4 paragraphs
 4. Click "Summarize" to generate the summary
+
+## ☁️ OneDrive Integration
+
+Intelligent Document Search includes built-in support for Microsoft OneDrive:
+
+- **Personal OneDrive**: `~/OneDrive`
+- **OneDrive for Business**: `~/OneDrive - [Organization]`
+- **Automatic Discovery**: Wildcard patterns automatically find OneDrive folders
+- **Real-time Sync**: Documents are indexed as OneDrive syncs them locally
+
+### Quick Setup
+
+OneDrive paths are pre-configured in `.env`:
+```env
+DOCUMENTS_FOLDERS=~/OneDrive,~/OneDrive - *,~/Library/CloudStorage/OneDrive-*
+```
+
+The wildcard `*` automatically matches your organization name in OneDrive for Business folders.
+
+### Requirements
+
+- OneDrive must be installed and syncing on your Mac
+- Files must be synced locally (not online-only) to be indexed
+- Supported file types: PDF, TXT, DOCX, DOC
+
+For detailed OneDrive setup, troubleshooting, and configuration options, see [ONEDRIVE_SETUP.md](ONEDRIVE_SETUP.md).
 
 ## 🏗️ Project Structure
 

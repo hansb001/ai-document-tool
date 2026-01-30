@@ -33,10 +33,12 @@ class IndexService {
       console.log(`🚫 Excluding patterns: ${this.excludePatterns.join(', ')}`);
     }
     
+    // Expand folders with wildcards
+    const expandedFolders = await this.expandFolderWildcards(folders);
+    
     // Index each folder
-    for (const folder of folders) {
-      const expandedPath = this.expandPath(folder);
-      const absolutePath = path.resolve(expandedPath);
+    for (const folder of expandedFolders) {
+      const absolutePath = path.resolve(folder);
       
       try {
         // Check if folder exists
@@ -49,7 +51,7 @@ class IndexService {
 
     // Setup file watcher if enabled
     if (watchForChanges) {
-      this.setupWatcher(folders.map(f => this.expandPath(f)));
+      this.setupWatcher(expandedFolders);
     }
 
     console.log(`✅ Indexed ${this.documents.size} documents`);
@@ -63,6 +65,49 @@ class IndexService {
       return path.join(require('os').homedir(), folderPath.slice(2));
     }
     return folderPath;
+  }
+
+  /**
+   * Expand folder paths with wildcards (e.g., ~/OneDrive - *)
+   */
+  async expandFolderWildcards(folders) {
+    const expandedFolders = [];
+    
+    for (const folder of folders) {
+      const expandedPath = this.expandPath(folder);
+      
+      // Check if path contains wildcard
+      if (expandedPath.includes('*')) {
+        const parentDir = path.dirname(expandedPath);
+        const pattern = path.basename(expandedPath);
+        
+        try {
+          // Check if parent directory exists
+          await fs.access(parentDir);
+          const entries = await fs.readdir(parentDir, { withFileTypes: true });
+          
+          // Convert glob pattern to regex
+          const regexPattern = pattern.replace(/\*/g, '.*');
+          const regex = new RegExp(`^${regexPattern}$`);
+          
+          // Find matching directories
+          for (const entry of entries) {
+            if (entry.isDirectory() && regex.test(entry.name)) {
+              const matchedPath = path.join(parentDir, entry.name);
+              expandedFolders.push(matchedPath);
+              console.log(`   ✓ Matched wildcard: ${matchedPath}`);
+            }
+          }
+        } catch (error) {
+          console.log(`   ⚠️  Could not expand wildcard ${folder}: ${error.message}`);
+        }
+      } else {
+        // No wildcard, add as-is
+        expandedFolders.push(expandedPath);
+      }
+    }
+    
+    return expandedFolders;
   }
 
   /**
@@ -303,10 +348,12 @@ class IndexService {
     const folders = documentsFolders.split(',').map(f => f.trim());
     this.excludePatterns = excludePatterns.split(',').map(p => p.trim()).filter(p => p);
     
+    // Expand folders with wildcards
+    const expandedFolders = await this.expandFolderWildcards(folders);
+    
     // Re-index each folder
-    for (const folder of folders) {
-      const expandedPath = this.expandPath(folder);
-      const absolutePath = path.resolve(expandedPath);
+    for (const folder of expandedFolders) {
+      const absolutePath = path.resolve(folder);
       
       try {
         await fs.access(absolutePath);
