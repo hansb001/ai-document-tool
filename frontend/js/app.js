@@ -510,17 +510,16 @@ async function compareDuplicates(docId1, docId2, filename) {
         const data = await response.json();
         
         if (response.ok) {
-            const formattedComparison = formatComparisonResult(data.comparison);
-            
+            // Local comparison returns HTML directly, no need to format
             compareResults.innerHTML = `
                 <div class="comparison-header">
                     <h4 style="margin: 0 0 0.5rem 0; color: white;">📊 Comparing: ${filename}</h4>
                     <p style="margin: 0; opacity: 0.95;">
-                        <strong>Version 1:</strong> ${data.document1.filename} (${data.document1.id.substring(0, 8)}...)<br>
-                        <strong>Version 2:</strong> ${data.document2.filename} (${data.document2.id.substring(0, 8)}...)
+                        <strong>Version 1:</strong> ${data.document1.filename}<br>
+                        <strong>Version 2:</strong> ${data.document2.filename}
                     </p>
                 </div>
-                <div class="result-text comparison-result">${formattedComparison}</div>
+                ${data.comparison}
             `;
             
             // Scroll to results

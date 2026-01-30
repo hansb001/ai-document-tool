@@ -8,6 +8,7 @@ require('dotenv').config();
 const documentService = require('./services/documentService');
 const aiService = require('./services/aiService');
 const indexService = require('./services/indexService');
+const comparisonService = require('./services/comparisonService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -264,7 +265,7 @@ app.post('/api/summarize', async (req, res) => {
   }
 });
 
-// Compare two documents
+// Compare two documents (using local diff algorithm)
 app.post('/api/compare', async (req, res) => {
   try {
     const { documentId1, documentId2 } = req.body;
@@ -280,7 +281,8 @@ app.post('/api/compare', async (req, res) => {
       return res.status(404).json({ error: 'One or both documents not found' });
     }
 
-    const comparison = await aiService.compareDocuments(
+    // Use local comparison service (no OpenAI required)
+    const comparison = comparisonService.compareDocuments(
       doc1.text,
       doc2.text,
       doc1.filename,

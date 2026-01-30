@@ -17,7 +17,7 @@ A powerful browser-based application for searching, translating, and summarizing
 - 🔍 **Smart Search**: Instant search across all indexed documents with context highlighting
 - 🌐 **AI Translation**: Translate documents to 19+ languages using OpenAI
 - 📝 **AI Summarization**: Generate short, medium, or long summaries
-- 🔄 **Duplicate Detection & Comparison**: Automatically finds documents with the same filename and compares different versions
+- 🔄 **Duplicate Detection & Comparison**: Automatically finds documents with the same filename and compares versions (no AI required - works offline!)
 - 👁️ **Real-time Monitoring**: Automatic detection of new, modified, or deleted files
 - ⚙️ **Settings Interface**: Easy folder selection and configuration via web UI
 - 💻 **Browser-Based**: Clean, responsive interface with modern design
@@ -117,11 +117,12 @@ A powerful browser-based application for searching, translating, and summarizing
    - View all versions with their locations and modification dates
    - Click "Compare These Two Versions" (for 2 versions)
    - Or select specific versions to compare (for 3+ versions)
-5. View the AI-powered comparison showing:
-   - **Key Differences**: Major changes between versions
-   - **Similarities**: Common themes and content
-   - **Content Changes**: Specific modifications
-   - **Summary**: Overall relationship assessment
+5. View the detailed comparison showing:
+   - **Similarity Percentage**: How similar the documents are
+   - **Statistics**: Lines added, removed, and unchanged
+   - **Key Changes**: Summary of modifications
+   - **Detailed Diff**: Line-by-line comparison with color coding
+   - **Document Details**: Size and line count for each version
 
 **Use Cases:**
 - Compare contract versions across different folders
