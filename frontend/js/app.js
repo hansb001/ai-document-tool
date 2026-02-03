@@ -729,13 +729,20 @@ async function saveSettings() {
         return;
     }
     
-    if (!confirm(`Save settings and re-index ${folders.length} folder(s)?\n\nFolders:\n${folders.join('\n')}`)) {
+    let confirmMessage = `Save settings and re-index ${folders.length} local folder(s)?`;
+    if (selectedBoxFolders.size > 0) {
+        confirmMessage += `\n\nAlso re-index ${selectedBoxFolders.size} Box folder(s)?`;
+    }
+    confirmMessage += `\n\nLocal Folders:\n${folders.join('\n')}`;
+    
+    if (!confirm(confirmMessage)) {
         return;
     }
     
     showLoading();
     
     try {
+        // Save local folder settings
         const response = await fetch(`${API_BASE}/settings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -748,12 +755,31 @@ async function saveSettings() {
         const data = await response.json();
         
         if (response.ok) {
-            showSettingsStatus('success', `✓ Settings saved! Re-indexing ${folders.length} folder(s)...`);
+            showSettingsStatus('success', `✓ Settings saved! Re-indexing local folders...`);
+            
+            // Re-index Box folders if any selected
+            if (selectedBoxFolders.size > 0) {
+                const boxFolderIds = Array.from(selectedBoxFolders);
+                const boxResponse = await fetch(`${API_BASE}/box/reindex`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        folderIds: boxFolderIds,
+                        maxFiles: 100
+                    })
+                });
+                
+                if (boxResponse.ok) {
+                    const boxData = await boxResponse.json();
+                    showSettingsStatus('success', `✓ Settings saved! Indexed ${boxData.count} Box documents.`);
+                }
+            }
             
             // Wait a bit then reload stats and documents
             setTimeout(async () => {
                 await loadDocuments();
                 await loadStats();
+                await checkBoxStatus();
                 showSettingsStatus('success', '✓ Settings saved and documents re-indexed successfully!');
             }, 2000);
         } else {
@@ -776,3 +802,200 @@ function showSettingsStatus(type, message) {
         statusEl.style.display = 'none';
     }, 5000);
 }
+// Box Integration State
+let selectedBoxFolders = new Set();
+
+// Box Folder Selection Functions
+async function checkBoxStatus() {
+    const boxStatus = document.getElementById('boxStatus');
+    const boxFolderBrowser = document.getElementById('boxFolderBrowser');
+    
+    try {
+        const response = await fetch(`${API_BASE}/box/documents`);
+        
+        if (response.status === 503) {
+            boxStatus.innerHTML = '<span style="color: #ef4444;">❌ Box integration is not enabled. Configure credentials in .env file.</span>';
+            boxFolderBrowser.style.display = 'none';
+        } else if (response.ok) {
+            const docs = await response.json();
+            boxStatus.innerHTML = `<span style="color: #10b981;">✓ Box connected • ${docs.length} documents indexed</span>`;
+            boxFolderBrowser.style.display = 'block';
+            setupBoxEventListeners();
+        } else {
+            boxStatus.innerHTML = '<span style="color: #ef4444;">❌ Box connection failed. Check credentials.</span>';
+            boxFolderBrowser.style.display = 'none';
+        }
+    } catch (error) {
+        boxStatus.innerHTML = '<span style="color: #ef4444;">❌ Cannot connect to Box service.</span>';
+        boxFolderBrowser.style.display = 'none';
+    }
+}
+
+function setupBoxEventListeners() {
+    const loadBoxFoldersBtn = document.getElementById('loadBoxFoldersBtn');
+    const selectAllBoxBtn = document.getElementById('selectAllBoxBtn');
+    const clearBoxSelectionBtn = document.getElementById('clearBoxSelectionBtn');
+    
+    if (loadBoxFoldersBtn) {
+        loadBoxFoldersBtn.addEventListener('click', loadBoxFolders);
+    }
+    if (selectAllBoxBtn) {
+        selectAllBoxBtn.addEventListener('click', selectAllBoxFolders);
+    }
+    if (clearBoxSelectionBtn) {
+        clearBoxSelectionBtn.addEventListener('click', clearBoxSelection);
+    }
+}
+
+async function loadBoxFolders() {
+    showLoading();
+    const boxFolderTreeEl = document.getElementById('boxFolderTree');
+    
+    try {
+        const response = await fetch(`${API_BASE}/box/folder-tree?maxDepth=3`);
+        
+        if (response.ok) {
+            boxFolderTree = await response.json();
+            displayBoxFolderTree(boxFolderTree, boxFolderTreeEl);
+            document.getElementById('selectAllBoxBtn').style.display = 'inline-block';
+            document.getElementById('clearBoxSelectionBtn').style.display = 'inline-block';
+        } else {
+            const error = await response.json();
+            boxFolderTreeEl.innerHTML = `<p class="error">Failed to load Box folders: ${error.error}</p>`;
+        }
+    } catch (error) {
+        boxFolderTreeEl.innerHTML = `<p class="error">Failed to load Box folders: ${error.message}</p>`;
+    } finally {
+        hideLoading();
+    }
+}
+
+function displayBoxFolderTree(folder, container, level = 0) {
+    if (!folder) return;
+    
+    const folderDiv = document.createElement('div');
+    folderDiv.className = 'box-folder-item';
+    folderDiv.style.marginLeft = `${level * 1.5}rem`;
+    
+    const isSelected = selectedBoxFolders.has(folder.id);
+    if (isSelected) {
+        folderDiv.classList.add('selected');
+    }
+    
+    folderDiv.innerHTML = `
+        <input type="checkbox" 
+               id="box-folder-${folder.id}" 
+               value="${folder.id}" 
+               ${isSelected ? 'checked' : ''}
+               onchange="toggleBoxFolder('${folder.id}')">
+        <span class="box-folder-icon">📁</span>
+        <div style="flex: 1;">
+            <div class="box-folder-name">${folder.name}</div>
+            <div class="box-folder-path">${folder.path}</div>
+        </div>
+        ${folder.children && folder.children.length > 0 ? 
+            `<button class="box-folder-toggle" onclick="toggleBoxFolderChildren('${folder.id}')">▼</button>` : 
+            ''}
+    `;
+    
+    container.appendChild(folderDiv);
+    
+    // Add children container
+    if (folder.children && folder.children.length > 0) {
+        const childrenDiv = document.createElement('div');
+        childrenDiv.id = `box-folder-children-${folder.id}`;
+        childrenDiv.className = 'box-folder-children';
+        
+        folder.children.forEach(child => {
+            displayBoxFolderTree(child, childrenDiv, level + 1);
+        });
+        
+        container.appendChild(childrenDiv);
+    }
+}
+
+function toggleBoxFolder(folderId) {
+    if (selectedBoxFolders.has(folderId)) {
+        selectedBoxFolders.delete(folderId);
+    } else {
+        selectedBoxFolders.add(folderId);
+    }
+    updateSelectedBoxFoldersList();
+}
+
+function toggleBoxFolderChildren(folderId) {
+    const childrenDiv = document.getElementById(`box-folder-children-${folderId}`);
+    if (childrenDiv) {
+        childrenDiv.style.display = childrenDiv.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function selectAllBoxFolders() {
+    if (!boxFolderTree) return;
+    
+    const addAllFolders = (folder) => {
+        selectedBoxFolders.add(folder.id);
+        if (folder.children) {
+            folder.children.forEach(addAllFolders);
+        }
+    };
+    
+    addAllFolders(boxFolderTree);
+    
+    // Update checkboxes
+    document.querySelectorAll('.box-folder-item input[type="checkbox"]').forEach(cb => {
+        cb.checked = true;
+    });
+    document.querySelectorAll('.box-folder-item').forEach(item => {
+        item.classList.add('selected');
+    });
+    
+    updateSelectedBoxFoldersList();
+}
+
+function clearBoxSelection() {
+    selectedBoxFolders.clear();
+    
+    // Update checkboxes
+    document.querySelectorAll('.box-folder-item input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
+    document.querySelectorAll('.box-folder-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    updateSelectedBoxFoldersList();
+}
+
+function updateSelectedBoxFoldersList() {
+    const listEl = document.getElementById('selectedBoxFoldersList');
+    
+    if (selectedBoxFolders.size === 0) {
+        listEl.innerHTML = 'No folders selected';
+        listEl.style.color = '#6b7280';
+    } else {
+        const folderIds = Array.from(selectedBoxFolders);
+        listEl.innerHTML = `
+            <div style="color: #10b981; font-weight: 500; margin-bottom: 0.5rem;">
+                ${folderIds.length} folder(s) selected
+            </div>
+            <div style="font-size: 0.75rem; color: #6b7280;">
+                Folder IDs: ${folderIds.join(', ')}
+            </div>
+        `;
+        listEl.style.color = '#1f2937';
+    }
+}
+
+// Initialize Box status check when settings tab is opened
+document.addEventListener('DOMContentLoaded', () => {
+    // Check Box status when page loads
+    checkBoxStatus();
+    
+    // Re-check when settings tab is clicked
+    const settingsTab = document.querySelector('[data-tab="settings"]');
+    if (settingsTab) {
+        settingsTab.addEventListener('click', checkBoxStatus);
+    }
+});
+let boxFolderTree = null;

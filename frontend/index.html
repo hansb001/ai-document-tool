@@ -141,6 +141,35 @@
                         <input type="text" id="excludePatterns" class="input-field" value="node_modules,*.app,*.dmg,*.pkg,.git,.DS_Store,Library,Applications" placeholder="node_modules,*.app,.git">
                     </div>
 
+                    <!-- Box Cloud Storage Settings -->
+                    <div class="form-group" style="border-top: 2px solid #e5e7eb; padding-top: 1.5rem; margin-top: 1.5rem;">
+                        <h4 style="margin-bottom: 0.5rem;">📦 Box Cloud Storage</h4>
+                        <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">
+                            Select Box folders to index. Configure Box credentials in .env file first.
+                        </p>
+                        
+                        <div id="boxStatus" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: 0.5rem; background: #f3f4f6;">
+                            <span style="color: #6b7280;">⏳ Checking Box connection...</span>
+                        </div>
+
+                        <div id="boxFolderBrowser" style="display: none;">
+                            <div style="margin-bottom: 1rem;">
+                                <button id="loadBoxFoldersBtn" class="btn btn-secondary">🔍 Browse Box Folders</button>
+                                <button id="selectAllBoxBtn" class="btn btn-secondary" style="display: none;">✓ Select All</button>
+                                <button id="clearBoxSelectionBtn" class="btn btn-secondary" style="display: none;">✗ Clear Selection</button>
+                            </div>
+                            
+                            <div id="boxFolderTree" class="box-folder-tree"></div>
+                            
+                            <div id="selectedBoxFolders" style="margin-top: 1rem;">
+                                <h5 style="margin-bottom: 0.5rem; color: #374151;">Selected Folders:</h5>
+                                <div id="selectedBoxFoldersList" style="color: #6b7280; font-size: 0.875rem;">
+                                    No folders selected
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
                         <button id="saveSettingsBtn" class="btn btn-primary">💾 Save & Re-index</button>
                         <button id="loadSettingsBtn" class="btn btn-secondary">🔄 Load Current Settings</button>

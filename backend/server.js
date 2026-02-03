@@ -9,12 +9,14 @@ const documentService = require('./services/documentService');
 const aiService = require('./services/aiService');
 const indexService = require('./services/indexService');
 const comparisonService = require('./services/comparisonService');
+const boxService = require('./services/boxService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DOCUMENTS_FOLDERS = process.env.DOCUMENTS_FOLDERS || './documents';
 const WATCH_DOCUMENTS = process.env.WATCH_DOCUMENTS === 'true';
 const EXCLUDE_PATTERNS = process.env.EXCLUDE_PATTERNS || 'node_modules,*.app,*.dmg,*.pkg,.git,.DS_Store';
+const BOX_ENABLED = process.env.BOX_ENABLED === 'true';
 
 // Middleware
 app.use(cors());
@@ -54,12 +56,26 @@ const upload = multer({
   }
 });
 
-// Initialize document indexing on startup
+// Initialize document indexing and Box on startup
 (async () => {
   try {
     await indexService.initialize(DOCUMENTS_FOLDERS, WATCH_DOCUMENTS, EXCLUDE_PATTERNS);
+    
+    // Initialize Box if enabled
+    if (BOX_ENABLED) {
+      const boxInitialized = boxService.initialize();
+      if (boxInitialized) {
+        // Parse Box folder IDs from environment variable
+        const boxFolderIds = process.env.BOX_FOLDER_IDS
+          ? process.env.BOX_FOLDER_IDS.split(',').map(id => id.trim())
+          : ['0']; // Default to root folder
+        
+        // Index Box files on startup
+        await boxService.indexBoxFiles(boxFolderIds, 100);
+      }
+    }
   } catch (error) {
-    console.error('Failed to initialize document indexing:', error);
+    console.error('Failed to initialize services:', error);
   }
 })();
 
@@ -96,10 +112,96 @@ app.post('/api/upload', upload.single('document'), async (req, res) => {
   }
 });
 
-// List all indexed documents
+// List all indexed documents (local + Box)
 app.get('/api/documents', (req, res) => {
-  const docList = indexService.getAllDocuments();
-  res.json(docList);
+  const localDocs = indexService.getAllDocuments();
+  const boxDocs = BOX_ENABLED ? boxService.getCachedDocuments() : [];
+  const allDocs = [...localDocs, ...boxDocs];
+  res.json(allDocs);
+});
+
+// Get Box documents only
+app.get('/api/box/documents', (req, res) => {
+  if (!BOX_ENABLED) {
+    return res.status(503).json({ error: 'Box integration is not enabled' });
+  }
+  const boxDocs = boxService.getCachedDocuments();
+  res.json(boxDocs);
+});
+
+// List Box folders
+app.get('/api/box/folders', async (req, res) => {
+  if (!BOX_ENABLED) {
+    return res.status(503).json({ error: 'Box integration is not enabled' });
+  }
+  
+  try {
+    const folderId = req.query.folderId || '0';
+    const folders = await boxService.listFolders(folderId);
+    res.json(folders);
+  } catch (error) {
+    console.error('Box list folders error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Box folder tree
+app.get('/api/box/folder-tree', async (req, res) => {
+  if (!BOX_ENABLED) {
+    return res.status(503).json({ error: 'Box integration is not enabled' });
+  }
+  
+  try {
+    const folderId = req.query.folderId || '0';
+    const maxDepth = parseInt(req.query.maxDepth) || 3;
+    const tree = await boxService.getFolderTree(folderId, maxDepth);
+    res.json(tree);
+  } catch (error) {
+    console.error('Box folder tree error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Re-index Box files
+app.post('/api/box/reindex', async (req, res) => {
+  if (!BOX_ENABLED) {
+    return res.status(503).json({ error: 'Box integration is not enabled' });
+  }
+  
+  try {
+    const maxFiles = req.body.maxFiles || 100;
+    const folderIds = req.body.folderIds || ['0'];
+    const indexed = await boxService.indexBoxFiles(folderIds, maxFiles);
+    res.json({
+      success: true,
+      message: `Indexed ${indexed.length} Box documents from ${folderIds.length} folder(s)`,
+      count: indexed.length,
+      folderIds: folderIds
+    });
+  } catch (error) {
+    console.error('Box re-index error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Search Box files
+app.post('/api/box/search', async (req, res) => {
+  if (!BOX_ENABLED) {
+    return res.status(503).json({ error: 'Box integration is not enabled' });
+  }
+  
+  try {
+    const { query } = req.body;
+    if (!query) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+    
+    const results = boxService.searchCachedDocuments(query);
+    res.json({ success: true, results });
+  } catch (error) {
+    console.error('Box search error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Get indexing statistics
@@ -193,7 +295,7 @@ app.get('/api/duplicates', (req, res) => {
   }
 });
 
-// Search in indexed documents
+// Search in indexed documents (local + Box)
 app.post('/api/search', async (req, res) => {
   try {
     const { query } = req.body;
@@ -202,15 +304,18 @@ app.post('/api/search', async (req, res) => {
       return res.status(400).json({ error: 'Search query is required' });
     }
 
-    const results = indexService.searchDocuments(query);
-    res.json({ results });
+    const localResults = indexService.searchDocuments(query);
+    const boxResults = BOX_ENABLED ? boxService.searchCachedDocuments(query) : [];
+    const allResults = [...localResults, ...boxResults];
+    
+    res.json({ results: allResults });
   } catch (error) {
     console.error('Search error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Translate document
+// Translate document (local or Box)
 app.post('/api/translate', async (req, res) => {
   try {
     const { documentId, targetLanguage } = req.body;
@@ -219,7 +324,12 @@ app.post('/api/translate', async (req, res) => {
       return res.status(400).json({ error: 'Document ID and target language are required' });
     }
 
-    const doc = indexService.getDocument(documentId);
+    // Try local documents first, then Box
+    let doc = indexService.getDocument(documentId);
+    if (!doc && BOX_ENABLED) {
+      doc = boxService.getDocument(documentId);
+    }
+    
     if (!doc) {
       return res.status(404).json({ error: 'Document not found' });
     }
@@ -238,7 +348,7 @@ app.post('/api/translate', async (req, res) => {
   }
 });
 
-// Summarize document
+// Summarize document (local or Box)
 app.post('/api/summarize', async (req, res) => {
   try {
     const { documentId, length } = req.body;
@@ -247,7 +357,12 @@ app.post('/api/summarize', async (req, res) => {
       return res.status(400).json({ error: 'Document ID is required' });
     }
 
-    const doc = indexService.getDocument(documentId);
+    // Try local documents first, then Box
+    let doc = indexService.getDocument(documentId);
+    if (!doc && BOX_ENABLED) {
+      doc = boxService.getDocument(documentId);
+    }
+    
     if (!doc) {
       return res.status(404).json({ error: 'Document not found' });
     }

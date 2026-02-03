@@ -13,7 +13,9 @@ A powerful browser-based application for searching, translating, and summarizing
 ## ✨ Features
 
 - 📁 **Multi-Folder Indexing**: Automatically index documents from multiple folders (Documents, Desktop, Downloads, custom paths)
-- ☁️ **OneDrive Integration**: Seamlessly search documents in Microsoft OneDrive (Personal & Business)
+- ☁️ **Cloud Storage Integration**:
+  - **OneDrive**: Microsoft OneDrive (Personal & Business)
+  - **Box**: Box cloud storage with full API integration
 - 🔍 **Smart Search**: Instant search across all indexed documents with context highlighting
 - 🌐 **AI Translation**: Translate documents to 19+ languages using OpenAI
 - 📝 **AI Summarization**: Generate short, medium, or long summaries
@@ -155,6 +157,38 @@ The wildcard `*` automatically matches your organization name in OneDrive for Bu
 - Supported file types: PDF, TXT, DOCX, DOC
 
 For detailed OneDrive setup, troubleshooting, and configuration options, see [ONEDRIVE_SETUP.md](ONEDRIVE_SETUP.md).
+
+## 📦 Box Cloud Storage Integration
+
+Intelligent Document Search includes full API integration with Box cloud storage:
+
+- **Cloud-Based Indexing**: Index documents directly from Box
+- **API Integration**: Uses Box SDK for seamless access
+- **Automatic Sync**: Downloads and indexes Box files on startup
+- **Full Feature Support**: Search, translate, summarize, and compare Box documents
+
+### Quick Setup
+
+1. Create a Box app at [Box Developer Console](https://app.box.com/developers/console)
+2. Get your credentials (Client ID, Client Secret, Developer Token)
+3. Add to `.env`:
+   ```env
+   BOX_CLIENT_ID=your_client_id
+   BOX_CLIENT_SECRET=your_client_secret
+   BOX_DEVELOPER_TOKEN=your_developer_token
+   BOX_ENABLED=true
+   ```
+4. Restart the application
+
+### Features
+
+- **Automatic Indexing**: Indexes up to 100 files on startup (configurable)
+- **Supported Formats**: PDF, TXT, DOCX, DOC
+- **Search Integration**: Box documents appear in search results with "Box:" prefix
+- **Full API Access**: Translate, summarize, and compare Box documents
+- **Re-indexing**: Manual re-index via API endpoint
+
+For detailed Box setup, API documentation, and troubleshooting, see [BOX_SETUP.md](BOX_SETUP.md).
 
 ## 🏗️ Project Structure
 
